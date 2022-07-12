@@ -15,7 +15,7 @@ class Ball_Robot():
         self.pend_drive_angle = 0.0  # pendulum angle w.r.t. vertical measured with the vn
         self.ball_pipe_angle = np.pi / 2  # pipe angle w.r.t. vertical measured with the vn
         self.steer_angle = 0.0  # steering angle of the pendulum, measured from perpendicular to the pipe
-
+        self.g = 9.81
     # define some updaters
     def update_ball_drive(self,x):
         self.ball_drive_angle = x
@@ -37,17 +37,18 @@ class Ball_Robot():
         M34, M43 = -self.mp*self.r**2 - self.Ip - self.mp*self.R*self.r*np.cos(q4-q3)
         M44 = self.mp*self.r**2 + self.Ip
 
-        return np.array([[M11, M12, M13, M14],
-                         [M21, M22, M23, M24],
-                         [M31, M32, M33, M34],
-                         [M41, M42, M43, M44]])
+        return np.array([[M11, M12,   0,   0],
+                         [M21, M22,   0,   0],
+                         [  0,   0, M33, M34],
+                         [  0,   0, M43, M44]])
 
-    def get_V(self, q):  # [sphere driving, pendulum drive, pipe angle, steering angle]
+    def get_V(self, q, q_dot):  # [sphere driving, pendulum drive, pipe angle, steering angle]
 
         q1, q2, q3, q4 = q
-        V11 = self.mp*self.R*self.l*np.sin(q2-q1)*(q1-q2)**2 - self.mp*self.g*self.r*np.sin(q2-q1)
+        q1d, q2d, q3d, q4d = q_dot
+        V11 = self.mp*self.R*self.r*np.sin(q2-q1)*(q1d**2 + q2d**2 - 2*q1*q2) - self.mp*self.g*self.r*np.sin(q2-q1)
         V21 = self.mp*self.g*self.r*np.sin(q2-q1)
-        V31 = self.mp * self.R * self.l * np.sin(q4 - q3) * (q4 - q3) ** 2 - self.mp * self.g * self.r * np.sin(q4 - q3)
+        V31 = self.mp*self.R*self.r*np.sin(q4-q3)*(q4d**2 + q3d**2 - 2*q4*q3) - self.mp*self.g*self.r*np.sin(q4-q3)
         V41 = self.mp * self.g * self.r * np.sin(q4 - q3)
         return np.array([[V11],
                         [V21],
