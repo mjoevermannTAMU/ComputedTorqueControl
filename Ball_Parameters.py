@@ -16,6 +16,12 @@ class Ball_Robot():
         self.ball_pipe_angle = np.pi / 2  # pipe angle w.r.t. vertical measured with the vn
         self.steer_angle = 0.0  # steering angle of the pendulum, measured from perpendicular to the pipe
         self.g = 9.81
+
+        # store previous measurements to estimate velocity
+        self.prev_pend_drive_angle = 0.0
+        self.prev_ball_pipe_angle = np.pi / 2
+
+
     # define some updaters
     def update_ball_drive(self,x):
         self.ball_drive_angle = x
@@ -25,6 +31,11 @@ class Ball_Robot():
         self.ball_pipe_angle = x
     def update_steer(self, x):
         self.steer_angle = x
+    def update_prev_pend_drive(self,x):
+        self.prev_pend_drive_angle = x
+    def update_prev_pipe_angle(self, x):
+        self.prev_ball_pipe_angle = x
+
 
     # define methods to output ball state mtx's
     def get_M(self, q): #[sphere driving, pendulum drive, pipe angle, steering angle]
