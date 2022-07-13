@@ -65,3 +65,9 @@ class Ball_Robot():
                         [V21],
                         [V31],
                         [V41]])
+
+
+
+def desired_path(t):
+    return np.sin(t) + 0.7*np.cos(1.5*t) # a random path I made up
+
