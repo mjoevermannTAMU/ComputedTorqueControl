@@ -3,19 +3,19 @@ import numpy as np
 # this file will define the ball EOM as presented in the Kayacan paper
 class Ball_Robot():
     # ball characteristics shared by all instances
-    Ms =  0.0
-    mp = 0.0
-    r = 0.0
-    R = 0.0
-    Is = 0.0
-    Ip = 0.0
-
+    Ms = 5
+    mp = 10
+    r = 0.5
+    R = 1
+    Ip = (Ms+mp)*r**2
+    Is = (mp*r**2)
+    g = 9.81
     def __init__(self):# define variables that track the balls state unique to this instance
         self.ball_drive_angle = 0.0  # global drive angle
         self.pend_drive_angle = 0.0  # pendulum angle w.r.t. vertical measured with the vn
         self.ball_pipe_angle = np.pi / 2  # pipe angle w.r.t. vertical measured with the vn
         self.steer_angle = 0.0  # steering angle of the pendulum, measured from perpendicular to the pipe
-        self.g = 9.81
+
 
         # store previous measurements to estimate velocity
         self.prev_pend_drive_angle = 0.0
@@ -42,7 +42,7 @@ class Ball_Robot():
         q1, q2, q3, q4 = q
         M11 = self.Ms*self.R**2 + self.mp*self.R**2 +self.mp*self.r**2 + self.Is + self.Ip + 2*self.mp*self.R*self.r*np.cos(q2-q1)
         M12, M21 = -self.mp*self.r**2 - self.Ip - self.mp*self.R*self.r*np.cos(q2-q1)
-        M13, M14, M23, M24, M31, M32, M41, M42 = 0
+        M13, M14, M23, M24, M31, M32, M41, M42 = 0,0,0,0,0,0,0,0
         M22 = self.mp*self.r**2 + self.Ip
         M33 = self.Ms*self.R**2 + self.mp*self.R**2 + self.mp*self.r**2 + self.Is + self.Ip + 2*self.mp*self.R*self.r*np.cos(q3-q4)
         M34, M43 = -self.mp*self.r**2 - self.Ip - self.mp*self.R*self.r*np.cos(q4-q3)
@@ -65,9 +65,28 @@ class Ball_Robot():
                         [V21],
                         [V31],
                         [V41]])
+    def get_M_static(self,q):
+        return np.array([[self.Ip, 0],
+                        [0, self.Is]])
+    def get_V_static(self, q):
+        return self.mp*self.g*self.r*np.array([[np.sin(q[0])],
+                                               [np.sin(q[1])]])
 
 
 
-def desired_path(t):
-    return np.sin(t) + 0.7*np.cos(1.5*t) # a random path I made up
-
+    def desired_steer(self, t): # [qd, qd dot]
+        return [np.sin(t) + 0.7*np.cos(1.5*t)-0.7, np.cos(t) - 1.5*0.7*np.sin(1.5*t)] # a random path I made up
+    def desired_drive(self, t, total_time):
+        if t < 0.2*total_time:
+            q = 0.5*t
+            qdot = 0.5
+        elif t < 0.8*total_time:
+            q = 0.5*0.2*total_time
+            qdot = 0.0
+        elif t <= total_time:
+            q = -0.5*t+5
+            qdot = -0.5
+        else:
+            q = 0.0
+            qdot= 0.0
+        return [q, qdot]
