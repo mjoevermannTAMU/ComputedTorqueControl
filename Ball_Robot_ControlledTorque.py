@@ -3,10 +3,10 @@ from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 from Ball_Parameters import Ball_Robot
 
-Iyy1, Iyy2 = 10,10
-Izz, Ixx2 = 10,10
-Kp, Kd = np.array([[100,0],[0,100]]) , np.array([[100,0],[0,100]])
 
+Kp, Kd = np.array([[1,0],[0,1]]) , np.array([[10,0],[0,10]])
+KI = np.array([[.01,0],
+              [0, .01]])
 
 dt = 0.02 # 200 Hz
 end_time = 10
@@ -15,11 +15,12 @@ t = np.arange(0,end_time, dt)
 robot = Ball_Robot()
 drive = robot.desired_drive
 steer = robot.desired_steer
+eint = np.zeros((2,2))
 
 def model(q, t): # q = [th1, th2, thd1, thd2]
     # read desired path
-    qd2, qdotd2 = steer(t)
-    qd1, qdotd1 = drive(t, end_time)
+    qd2, qdotd2, accel_des1 = steer(t)
+    qd1, qdotd1, accel_des2 = drive(t, end_time)
 
     # get dynamics
     M = robot.get_M_static(q)
@@ -30,14 +31,17 @@ def model(q, t): # q = [th1, th2, thd1, thd2]
                   [q[1] - qd2]])
     edot = np.array([[q[2] - qdotd1],
                      [q[3] - qdotd2]])
+    accel_des = np.array([[accel_des1],
+                          [accel_des2]])
     # calculate torque
-    T = -Kp @ e - Kd @ edot
+    T = M @ (-Kp @ e - Kd @ edot -accel_des) + G
 
     # command the torque
     accel_vec = np.linalg.inv(M) @ (T - G)
     return q[2], q[3], accel_vec[0][0], accel_vec[1][0]
 
 # integrate the models
+
 sol = odeint(model, [0.0, 0.0, 0.0, 0.0], t)
 
 dq2dt = np.zeros((len(t), 2))

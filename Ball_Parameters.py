@@ -75,11 +75,15 @@ class Ball_Robot():
 
 
     def desired_steer(self, t): # [qd, qd dot]
-        return [np.sin(t) + 0.7*np.cos(1.5*t)-0.7, np.cos(t) - 1.5*0.7*np.sin(1.5*t)] # a random path I made up
+        return [np.sin(t) + 0.7*np.cos(1.5*t)-0.7,
+                np.cos(t) - 1.5*0.7*np.sin(1.5*t),
+                -np.sin(t) - 1.5*1.5*0.7*np.cos(1.5*t)] # a random path I made up
+
     def desired_drive(self, t, total_time):
         if t < 0.2*total_time:
             q = 0.5*t
             qdot = 0.5
+
         elif t < 0.8*total_time:
             q = 0.5*0.2*total_time
             qdot = 0.0
@@ -89,4 +93,4 @@ class Ball_Robot():
         else:
             q = 0.0
             qdot= 0.0
-        return [q, qdot]
+        return [q, qdot, 0]
